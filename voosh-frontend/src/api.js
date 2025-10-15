@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:4000/api"; // Backend URL
+// Use environment variable if available, fallback to localhost
+const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:4000/api";
 
 export const sendChat = async (sessionId, prompt) => {
   const res = await axios.post(`${API_BASE}/chat`, { sessionId, prompt });

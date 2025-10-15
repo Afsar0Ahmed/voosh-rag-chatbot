@@ -1,4 +1,4 @@
-import redis from "redis";
+import { createClient } from "redis";
 
 let client;
 
@@ -6,13 +6,21 @@ const redisUrl = process.env.REDIS_URL;
 const redisHost = process.env.REDIS_HOST || "127.0.0.1";
 const redisPort = process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379;
 const redisPassword = process.env.REDIS_PASSWORD || undefined;
+const redisUsername = process.env.REDIS_USERNAME || "default";
 
+// Function to create Redis client
 function createRedisClient() {
   if (redisUrl) {
-    return redis.createClient({ url: redisUrl, password: redisPassword });
+    // Use full URL (Upstash style)
+    return createClient({
+      url: redisUrl,
+      password: redisPassword,
+    });
   } else {
-    return redis.createClient({
+    // Standard host/port Redis
+    return createClient({
       socket: { host: redisHost, port: redisPort },
+      username: redisUsername,
       password: redisPassword,
     });
   }
@@ -20,11 +28,13 @@ function createRedisClient() {
 
 client = createRedisClient();
 
+// Event listeners
 client.on("error", (err) => console.error("❌ Redis Client Error:", err));
 client.on("connect", () => console.log("🔗 Redis connecting..."));
 client.on("ready", () => console.log("✅ Redis is ready!"));
 client.on("end", () => console.log("⚠️ Redis connection closed"));
 
+// Connect with retries
 async function connectRedis(retries = 5, delay = 3000) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -43,7 +53,7 @@ async function connectRedis(retries = 5, delay = 3000) {
   }
 }
 
-// Call immediately
+// Connect immediately
 connectRedis().catch((err) => console.error("🚨 Could not connect to Redis:", err));
 
 /** Helper functions **/
